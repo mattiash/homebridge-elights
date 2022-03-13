@@ -13,8 +13,8 @@ import {
   PlatformConfig,
 } from "homebridge";
 
-const PLUGIN_NAME = "homebridge-dynamic-platform-example";
-const PLATFORM_NAME = "ExampleDynamicPlatform";
+const PLUGIN_NAME = "homebridge-elights";
+const PLATFORM_NAME = "Elights";
 
 /*
  * IMPORTANT NOTICE
@@ -45,25 +45,19 @@ export = (api: API) => {
   hap = api.hap;
   Accessory = api.platformAccessory;
 
-  api.registerPlatform(PLATFORM_NAME, ExampleDynamicPlatform);
+  api.registerPlatform(PLATFORM_NAME, ElightsDynamicPlatform);
 };
 
-class ExampleDynamicPlatform implements DynamicPlatformPlugin {
-
-  private readonly log: Logging;
-  private readonly api: API;
-
+class ElightsDynamicPlatform implements DynamicPlatformPlugin {
   private requestServer?: Server;
 
   private readonly accessories: PlatformAccessory[] = [];
 
-  constructor(log: Logging, config: PlatformConfig, api: API) {
-    this.log = log;
-    this.api = api;
+  constructor(private readonly log: Logging, config: PlatformConfig, private readonly api: API) {
 
     // probably parse config or something here
 
-    log.info("Example platform finished initializing!");
+    log.info("Elights platform finished initializing!");
 
     /*
      * When this event is fired, homebridge restored all cached accessories from disk and did call their respective
@@ -72,7 +66,7 @@ class ExampleDynamicPlatform implements DynamicPlatformPlugin {
      * This event can also be used to start discovery of new accessories.
      */
     api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
-      log.info("Example platform 'didFinishLaunching'");
+      log.info("Elights platform 'didFinishLaunching'");
 
       // The idea of this plugin is that we open a http service which exposes api calls to add or remove accessories
       this.createHttpService();
@@ -101,7 +95,7 @@ class ExampleDynamicPlatform implements DynamicPlatformPlugin {
 
   // --------------------------- CUSTOM METHODS ---------------------------
 
-  addAccessory(name: string) {
+  private addAccessory(name: string) {
     this.log.info("Adding new accessory with name %s", name);
 
     // uuid must be generated from a unique but not changing data source, name should not be used in the most cases. But works in this specific example.
@@ -115,7 +109,7 @@ class ExampleDynamicPlatform implements DynamicPlatformPlugin {
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
 
-  removeAccessories() {
+  private removeAccessories() {
     // we don't have any special identifiers, we just remove all our accessories
 
     this.log.info("Removing all accessories");
@@ -124,7 +118,7 @@ class ExampleDynamicPlatform implements DynamicPlatformPlugin {
     this.accessories.splice(0, this.accessories.length); // clear out the array
   }
 
-  createHttpService() {
+  private createHttpService() {
     this.requestServer = http.createServer(this.handleRequest.bind(this));
     this.requestServer.listen(18081, () => this.log.info("Http server listening on 18081..."));
   }
