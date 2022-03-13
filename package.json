@@ -1,6 +1,6 @@
 {
   "name": "homebridge-elights",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Homebridge plugin for Elights",
   "main": "dist/elights-platform.js",
   "scripts": {
@@ -11,6 +11,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Mattias Holmlund <mattias@holmlund.se>",
+  "keywords": [
+    "homebridge-plugin"
+  ],
   "engines": {
     "homebridge": ">=1.0.0"
   },
