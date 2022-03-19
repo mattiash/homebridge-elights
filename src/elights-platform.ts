@@ -12,6 +12,7 @@ import {
   PlatformAccessoryEvent,
   PlatformConfig,
 } from "homebridge";
+import { getComponents } from "./elights-api";
 
 const PLUGIN_NAME = "homebridge-elights";
 const PLATFORM_NAME = "Elights";
@@ -51,7 +52,7 @@ export = (api: API) => {
 class ElightsDynamicPlatform implements DynamicPlatformPlugin {
   private requestServer?: Server;
 
-  private readonly accessories: PlatformAccessory[] = [];
+  private readonly accessories = new Map<string, PlatformAccessory>();
 
   constructor(private readonly log: Logging, config: PlatformConfig, private readonly api: API) {
 
@@ -65,9 +66,24 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
      * after this event was fired, in order to ensure they weren't added to homebridge already.
      * This event can also be used to start discovery of new accessories.
      */
-    api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
+    api.on(APIEvent.DID_FINISH_LAUNCHING, async () => {
       log.info("Elights platform 'didFinishLaunching'");
 
+      const components = await getComponents()
+
+      for(const c of components) {
+        if(c.type === 'RelayOutput') {
+          let acc = this.accessories.get(c.uuid)
+          if(!acc) {
+            log.info(`Found new component ${c.name} in ${c.room}`)
+            acc = new Accessory(`${c.room}/${c.name}`, c.uuid);
+            
+            acc.addService(hap.Service.Lightbulb, `${c.room}/${c.name}`);
+            this.configureAccessory(acc); // abusing the configureAccessory here
+            this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [acc]);
+          }
+        }
+      }
       // The idea of this plugin is that we open a http service which exposes api calls to add or remove accessories
       this.createHttpService();
     });
@@ -86,11 +102,11 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
 
     accessory.getService(hap.Service.Lightbulb)!.getCharacteristic(hap.Characteristic.On)
       .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        this.log.info("%s Light was set to: " + value);
+        this.log.info(`${accessory.UUID} was set to: ${value}`);
         callback();
       });
 
-    this.accessories.push(accessory);
+    this.accessories.set(accessory.UUID, accessory);
   }
 
   // --------------------------- CUSTOM METHODS ---------------------------
@@ -109,13 +125,14 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
 
+  // This is probably only called from the http service. Remove?
   private removeAccessories() {
     // we don't have any special identifiers, we just remove all our accessories
 
     this.log.info("Removing all accessories");
 
-    this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, this.accessories);
-    this.accessories.splice(0, this.accessories.length); // clear out the array
+    this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [...this.accessories.values()]);
+    this.accessories.clear()
   }
 
   private createHttpService() {

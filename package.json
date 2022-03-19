@@ -8,7 +8,7 @@
     "build": "rimraf ./dist && tsc",
     "prepublishOnly": "npm run build",
     "postpublish": "npm run clean",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "multi-tape ./dist/test"
   },
   "author": "Mattias Holmlund <mattias@holmlund.se>",
   "keywords": [
@@ -27,9 +27,14 @@
     "url": "git://github.com/mattiash/homebridge-elights.git"
   },
   "devDependencies": {
-    "@types/node": "10.17.19",
-    "typescript": "^3.8.3",
+    "@types/node": "17.0.21",
+    "homebridge": "^1.0.4",
+    "multi-tape": "^1.6.1",
+    "purple-tape": "^3.9.2",
     "rimraf": "^3.0.2",
-    "homebridge": "^1.0.4"
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "got": "^11"
   }
 }

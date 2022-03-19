@@ -1,0 +1,25 @@
+import got from  'got'
+
+const BASE = 'http://elights-int.holmlund.se/api'
+
+export interface ELIGHTS_COMPONENT_BASE {
+    uuid: string
+    room: string
+    name: string
+}
+
+export interface ELIGHTS_DIMMER_OUTPUT extends ELIGHTS_COMPONENT_BASE {
+    type: 'DimmerOutput'
+    value: number
+}
+
+export interface ELIGHTS_RELAY_OUTPUT extends ELIGHTS_COMPONENT_BASE {
+    type: 'RelayOutput'
+    value: boolean
+}
+
+export type ELIGHTS_COMPONENT = ELIGHTS_DIMMER_OUTPUT | ELIGHTS_RELAY_OUTPUT
+
+export async function getComponents(): Promise<ELIGHTS_COMPONENT[]> {
+    return await got( `${BASE}/uuid`).json()
+}
