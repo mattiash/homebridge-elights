@@ -112,41 +112,21 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
   }
 
   // --------------------------- CUSTOM METHODS ---------------------------
-
-  private addAccessory(name: string) {
-    this.log.info("Adding new accessory with name %s", name);
-
-    // uuid must be generated from a unique but not changing data source, name should not be used in the most cases. But works in this specific example.
-    const uuid = hap.uuid.generate(name);
-    const accessory = new Accessory(name, uuid);
-
-    accessory.addService(hap.Service.Lightbulb, "Test Light");
-
-    this.configureAccessory(accessory); // abusing the configureAccessory here
-
-    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-  }
-
-  // This is probably only called from the http service. Remove?
-  private removeAccessories() {
-    // we don't have any special identifiers, we just remove all our accessories
-
-    this.log.info("Removing all accessories");
-
-    this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [...this.accessories.values()]);
-    this.accessories.clear()
-  }
-
   private createHttpService() {
     this.requestServer = http.createServer(this.handleRequest.bind(this));
     this.requestServer.listen(18081, () => this.log.info("Http server listening on 18081..."));
   }
 
   private handleRequest(request: IncomingMessage, response: ServerResponse) {
-    if (request.url === "/add") {
-      this.addAccessory(new Date().toISOString());
-    } else if (request.url === "/remove") {
-      this.removeAccessories();
+    const m = request.url?.match(/\/uuid\/([0-9a-f-]+)\/(.*)/)
+    if(m) {
+      const acc = this.accessories.get(m[1])
+      if(acc) {
+        const charLightBulbOn = acc.getService(hap.Service.Lightbulb)?.getCharacteristic(hap.Characteristic.On)
+        if(charLightBulbOn) {
+          charLightBulbOn.setValue(m[2] === 'true')
+        }
+      }
     }
 
     response.writeHead(204); // 204 No content
