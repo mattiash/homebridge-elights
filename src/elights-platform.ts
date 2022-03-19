@@ -12,7 +12,7 @@ import {
   PlatformAccessoryEvent,
   PlatformConfig,
 } from "homebridge";
-import { getComponents } from "./elights-api";
+import { getComponents, setRelayOutput } from "./elights-api";
 
 const PLUGIN_NAME = "homebridge-elights";
 const PLATFORM_NAME = "Elights";
@@ -82,6 +82,7 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
             this.configureAccessory(acc); // abusing the configureAccessory here
             this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [acc]);
           }
+          acc.getService(hap.Service.Lightbulb)?.getCharacteristic(hap.Characteristic.On).setValue(c.value)
         }
       }
       // The idea of this plugin is that we open a http service which exposes api calls to add or remove accessories
@@ -101,8 +102,9 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
     });
 
     accessory.getService(hap.Service.Lightbulb)!.getCharacteristic(hap.Characteristic.On)
-      .on(CharacteristicEventTypes.SET, (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+      .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         this.log.info(`${accessory.UUID} was set to: ${value}`);
+        await setRelayOutput(accessory.UUID, value === true)
         callback();
       });
 
