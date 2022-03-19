@@ -25,5 +25,5 @@ export async function getComponents(): Promise<ELIGHTS_COMPONENT[]> {
 }
 
 export async function setRelayOutput(uuid: string, value: boolean) {
-    await got.put( `${BASE}/uuid/${uuid}`, { json: { value: true} })
+    await got.put( `${BASE}/uuid/${uuid}`, { json: { value } })
 }
