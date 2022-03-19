@@ -124,7 +124,7 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
       if(acc) {
         const charLightBulbOn = acc.getService(hap.Service.Lightbulb)?.getCharacteristic(hap.Characteristic.On)
         if(charLightBulbOn) {
-          charLightBulbOn.setValue(m[2] === 'true')
+          charLightBulbOn.updateValue(m[2] === 'true')
         }
       }
     }
