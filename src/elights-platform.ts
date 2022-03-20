@@ -118,14 +118,25 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
   }
 
   private handleRequest(request: IncomingMessage, response: ServerResponse) {
-    const m = request.url?.match(/\/uuid\/([0-9a-f-]+)\/(.*)/)
-    if(m) {
-      const acc = this.accessories.get(m[1])
-      if(acc) {
-        const charLightBulbOn = acc.getService(hap.Service.Lightbulb)?.getCharacteristic(hap.Characteristic.On)
-        if(charLightBulbOn) {
-          charLightBulbOn.updateValue(m[2] === 'true')
+    {
+      const m = request.url?.match(/\/uuid\/([0-9a-f-]+)\/(.*)/)
+      if(m) {
+        const acc = this.accessories.get(m[1])
+        if(acc) {
+          const charLightBulbOn = acc.getService(hap.Service.Lightbulb)?.getCharacteristic(hap.Characteristic.On)
+          if(charLightBulbOn) {
+            charLightBulbOn.updateValue(m[2] === 'true')
+          }
         }
+      }
+    }
+
+    {
+      const m = request.url?.match(/\/removeAll/)
+      if(m) {
+        this.log.info("Removing all accessories");
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [...this.accessories.values()]);
+        this.accessories.clear()
       }
     }
 
