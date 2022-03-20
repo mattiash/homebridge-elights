@@ -82,7 +82,7 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
             this.configureAccessory(acc); // abusing the configureAccessory here
             this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [acc]);
           }
-          acc.getService(hap.Service.Outlet)?.getCharacteristic(hap.Characteristic.On).setValue(c.value)
+          this.updateAccessoryValue(c.uuid, c.value)
         }
       }
       // The idea of this plugin is that we open a http service which exposes api calls to add or remove accessories
@@ -117,17 +117,26 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
     this.requestServer.listen(18081, () => this.log.info("Http server listening on 18081..."));
   }
 
+  private updateAccessoryValue(uuid: string, value: boolean | number) {
+        const acc = this.accessories.get(uuid)
+        if(acc) {
+          const outletService = acc.getService(hap.Service.Outlet)
+          if(outletService && typeof value === 'boolean') {
+            const char = outletService.getCharacteristic(hap.Characteristic.On)
+            char.updateValue(value)
+          }
+        }
+
+  }
+
   private handleRequest(request: IncomingMessage, response: ServerResponse) {
     {
       const m = request.url?.match(/\/uuid\/([0-9a-f-]+)\/(.*)/)
       if(m) {
-        const acc = this.accessories.get(m[1])
-        if(acc) {
-          const charLightBulbOn = acc.getService(hap.Service.Outlet)?.getCharacteristic(hap.Characteristic.On)
-          if(charLightBulbOn) {
-            charLightBulbOn.updateValue(m[2] === 'true')
-          }
-        }
+          const uuid = m[1]
+          const valueString = m[2]
+          const value = valueString === 'true' ? true : valueString === 'false' ? false : parseInt(valueString)
+          this.updateAccessoryValue(uuid, value)
       }
     }
 
