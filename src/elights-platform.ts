@@ -78,7 +78,7 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
             log.info(`Found new component ${c.name} in ${c.room}`)
             acc = new Accessory(`${c.room}/${c.name}`, c.uuid);
             
-            acc.addService(hap.Service.Lightbulb, `${c.room}/${c.name}`);
+            acc.addService(hap.Service.Outlet, `${c.room}/${c.name}`);
             this.configureAccessory(acc); // abusing the configureAccessory here
             this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [acc]);
           }
