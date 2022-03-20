@@ -82,7 +82,7 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
             this.configureAccessory(acc); // abusing the configureAccessory here
             this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [acc]);
           }
-          acc.getService(hap.Service.Lightbulb)?.getCharacteristic(hap.Characteristic.On).setValue(c.value)
+          acc.getService(hap.Service.Outlet)?.getCharacteristic(hap.Characteristic.On).setValue(c.value)
         }
       }
       // The idea of this plugin is that we open a http service which exposes api calls to add or remove accessories
@@ -101,7 +101,7 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
       this.log("%s identified!", accessory.displayName);
     });
 
-    accessory.getService(hap.Service.Lightbulb)!.getCharacteristic(hap.Characteristic.On)
+    accessory.getService(hap.Service.Outlet)!.getCharacteristic(hap.Characteristic.On)
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         this.log.info(`${accessory.UUID} was set to: ${value}`);
         await setRelayOutput(accessory.UUID, value === true)
@@ -123,7 +123,7 @@ class ElightsDynamicPlatform implements DynamicPlatformPlugin {
       if(m) {
         const acc = this.accessories.get(m[1])
         if(acc) {
-          const charLightBulbOn = acc.getService(hap.Service.Lightbulb)?.getCharacteristic(hap.Characteristic.On)
+          const charLightBulbOn = acc.getService(hap.Service.Outlet)?.getCharacteristic(hap.Characteristic.On)
           if(charLightBulbOn) {
             charLightBulbOn.updateValue(m[2] === 'true')
           }
