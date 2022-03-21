@@ -6,12 +6,13 @@ import {
     PlatformConfig,
     Service,
     Characteristic,
+    UnknownContext,
 } from 'homebridge'
 
 import http, { IncomingMessage, Server, ServerResponse } from 'http'
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings'
 import { ElightsRelayAccessory } from './elights-relay-accessory'
-import { getComponents } from './elights-api'
+import { ELIGHTS_COMPONENT, getComponents } from './elights-api'
 
 /**
  * HomebridgePlatform
@@ -74,20 +75,15 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
                 let existingAccessory = this.accessories.get(c.uuid)
                 if (existingAccessory) {
                     this.log.info(`Restoring relay ${c.uuid}`)
-                    this.elightsComponents.set(
-                        c.uuid,
-                        new ElightsRelayAccessory(this, existingAccessory),
-                    )
+                    this.setupElightsComponent(c, existingAccessory)
                 } else {
                     this.log.info(`Discovered relay ${c.uuid}`)
                     const accessory = new this.api.platformAccessory(
                         `${c.room}/${c.name}`,
                         c.uuid,
                     )
-                    this.elightsComponents.set(
-                        c.uuid,
-                        new ElightsRelayAccessory(this, accessory),
-                    )
+
+                    this.setupElightsComponent(c, accessory)
 
                     // link the accessory to your platform
                     this.api.registerPlatformAccessories(
@@ -96,11 +92,24 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
                         [accessory],
                     )
                 }
+                this.updateAccessoryValue(c.uuid, c.value)
             }
-            this.updateAccessoryValue(c.uuid, c.value)
         }
+
         // The idea of this plugin is that we open a http service which exposes api calls to add or remove accessories
         this.createHttpService()
+    }
+
+    private setupElightsComponent(
+        c: ELIGHTS_COMPONENT,
+        accessory: PlatformAccessory<UnknownContext>,
+    ) {
+        if (c.type === 'RelayOutput') {
+            this.elightsComponents.set(
+                c.uuid,
+                new ElightsRelayAccessory(this, accessory),
+            )
+        }
     }
 
     private updateAccessoryValue(uuid: string, value: any) {
