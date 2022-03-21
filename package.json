@@ -28,11 +28,11 @@
   },
   "devDependencies": {
     "@types/node": "17.0.21",
-    "homebridge": "^1.0.4",
+    "homebridge": "^1.4.0",
     "multi-tape": "^1.6.1",
     "purple-tape": "^3.9.2",
     "rimraf": "^3.0.2",
-    "typescript": "^3.8.3"
+    "typescript": "^4.6.2"
   },
   "dependencies": {
     "got": "^11"

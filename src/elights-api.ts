@@ -11,6 +11,7 @@ export interface ELIGHTS_COMPONENT_BASE {
 export interface ELIGHTS_DIMMER_OUTPUT extends ELIGHTS_COMPONENT_BASE {
     type: 'DimmerOutput'
     value: number
+    percentage: number
 }
 
 export interface ELIGHTS_RELAY_OUTPUT extends ELIGHTS_COMPONENT_BASE {
@@ -26,4 +27,8 @@ export async function getComponents(): Promise<ELIGHTS_COMPONENT[]> {
 
 export async function setRelayOutput(uuid: string, value: boolean) {
     await got.put( `${BASE}/uuid/${uuid}`, { json: { value } })
+}
+
+export async function setDimmerOutput(uuid: string, percentage: number) {
+    await got.put( `${BASE}/uuid/${uuid}`, { json: { value: percentage } })
 }
