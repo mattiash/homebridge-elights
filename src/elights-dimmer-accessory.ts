@@ -1,5 +1,5 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge'
-import { setRelayOutput } from './elights-api'
+import { setDimmerOutput } from './elights-api'
 
 import { ElightsDynamicPlatform } from './platform'
 
@@ -24,7 +24,7 @@ export class ElightsDimmerAccessory {
             )
             .setCharacteristic(
                 this.platform.Characteristic.Model,
-                'RelayOutput',
+                'DimmerOutput',
             )
             .setCharacteristic(
                 this.platform.Characteristic.SerialNumber,
@@ -63,32 +63,44 @@ export class ElightsDimmerAccessory {
      */
     async setOn(value: CharacteristicValue) {
         this.platform.log.info(`${this.accessory.UUID} was set to: ${value}`)
-        await setRelayOutput(this.accessory.UUID, value === true)
+        await setDimmerOutput(this.accessory.UUID, value ? 50 : 0)
     }
 
     async setBrightness(value: CharacteristicValue) {
-        this.platform.log.info(`${this.accessory.UUID} was set to: ${value}`)
-        await setRelayOutput(this.accessory.UUID, value === true)
+        if (typeof value === 'number' && value >= 0 && value <= 100) {
+            this.platform.log.info(
+                `${this.accessory.UUID} was set to: ${value}`,
+            )
+            await setDimmerOutput(this.accessory.UUID, value)
+        } else {
+            this.platform.log.error(
+                `${this.accessory.UUID} invalid value: ${value}`,
+            )
+        }
     }
 
     elightsValueUpdated(value: any) {
-        if (typeof value === 'boolean') {
-            const outletService = this.accessory.getService(
-                this.platform.Service.Outlet,
+        if (typeof value === 'number') {
+            const lightbulbService = this.accessory.getService(
+                this.platform.Service.Lightbulb,
             )
-            if (outletService) {
-                const char = outletService.getCharacteristic(
+            if (lightbulbService) {
+                const char = lightbulbService.getCharacteristic(
                     this.platform.Characteristic.On,
                 )
-                char.updateValue(value)
+                char.updateValue(value > 0)
+                const char2 = lightbulbService.getCharacteristic(
+                    this.platform.Characteristic.Brightness,
+                )
+                char2.updateValue(value)
             } else {
                 this.platform.log.error(
-                    `No Outlet for Relay ${this.accessory.UUID}`,
+                    `No Lightbuld for Dimmer ${this.accessory.UUID}`,
                 )
             }
         } else {
             this.platform.log.error(
-                `Bad value ${value} for Relay ${this.accessory.UUID}`,
+                `Bad value ${value} for Dimmer ${this.accessory.UUID}`,
             )
         }
     }

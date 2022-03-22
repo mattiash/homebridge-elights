@@ -13,6 +13,7 @@ import http, { IncomingMessage, Server, ServerResponse } from 'http'
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings'
 import { ElightsRelayAccessory } from './elights-relay-accessory'
 import { ELIGHTS_COMPONENT, getComponents } from './elights-api'
+import { ElightsDimmerAccessory } from './elights-dimmer-accessory'
 
 /**
  * HomebridgePlatform
@@ -29,7 +30,7 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
 
     private readonly elightsComponents = new Map<
         string,
-        ElightsRelayAccessory
+        ElightsRelayAccessory | ElightsDimmerAccessory
     >()
     private requestServer?: Server
 
@@ -71,15 +72,15 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
         const components = await getComponents()
 
         for (const c of components) {
-            if (c.type === 'RelayOutput') {
+            if (c.type === 'RelayOutput' || c.type === 'DimmerOutput') {
                 let existingAccessory = this.accessories.get(c.uuid)
                 if (existingAccessory) {
-                    this.log.info(`Restoring relay ${c.uuid}`)
+                    this.log.info(`Restoring component ${c.uuid}`)
                     this.setupElightsComponent(c, existingAccessory)
                 } else {
-                    this.log.info(`Discovered relay ${c.uuid}`)
+                    this.log.info(`Discovered component ${c.uuid}`)
                     const accessory = new this.api.platformAccessory(
-                        `${c.room}/${c.name}`,
+                        `${c.room} ${c.name}`,
                         c.uuid,
                     )
 
@@ -108,6 +109,11 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
             this.elightsComponents.set(
                 c.uuid,
                 new ElightsRelayAccessory(this, accessory),
+            )
+        } else if (c.type === 'DimmerOutput') {
+            this.elightsComponents.set(
+                c.uuid,
+                new ElightsDimmerAccessory(this, accessory),
             )
         }
     }
