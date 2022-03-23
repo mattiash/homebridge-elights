@@ -70,7 +70,7 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
      */
     async discoverDevices() {
         const components = await getComponents()
-
+        this.log.info('Starting device discovery')
         for (const c of components) {
             if (c.type === 'RelayOutput' || c.type === 'DimmerOutput') {
                 let existingAccessory = this.accessories.get(c.uuid)
@@ -96,6 +96,7 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
                 this.updateAccessoryValue(c.uuid, c.value)
             }
         }
+        this.log.info('Device discovery done')
 
         // The idea of this plugin is that we open a http service which exposes api calls to add or remove accessories
         this.createHttpService()
@@ -123,7 +124,9 @@ export class ElightsDynamicPlatform implements DynamicPlatformPlugin {
         if (elightsComponent) {
             elightsComponent.elightsValueUpdated(value)
         } else {
-            this.log.error(`updateAccessoryValue unknown uuid ${uuid}`)
+            this.log.error(
+                `updateAccessoryValue unknown uuid ${uuid} with value ${value}`,
+            )
         }
     }
 

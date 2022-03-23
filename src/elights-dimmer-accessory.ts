@@ -13,7 +13,8 @@ export class ElightsDimmerAccessory {
 
     // The value that the dimmer had when it was last on
     // or the current value if the dimmer is on
-    private latestOnValue = 50
+    private currentBrightness = 50
+    private currentOn = true
 
     constructor(
         private readonly platform: ElightsDynamicPlatform,
@@ -67,10 +68,8 @@ export class ElightsDimmerAccessory {
      */
     async setOn(value: CharacteristicValue) {
         this.platform.log.info(`${this.accessory.UUID} was set to: ${value}`)
-        await setDimmerOutput(
-            this.accessory.UUID,
-            value ? this.latestOnValue : 0,
-        )
+        this.currentOn = !!value
+        await this.updateElights()
     }
 
     async setBrightness(value: CharacteristicValue) {
@@ -78,8 +77,8 @@ export class ElightsDimmerAccessory {
             this.platform.log.info(
                 `${this.accessory.UUID} was set to: ${value}`,
             )
-            await setDimmerOutput(this.accessory.UUID, value)
-            this.latestOnValue = value
+            this.currentBrightness = value
+            await this, this.updateElights()
         } else {
             this.platform.log.error(
                 `${this.accessory.UUID} invalid value: ${value}`,
@@ -88,30 +87,48 @@ export class ElightsDimmerAccessory {
     }
 
     elightsValueUpdated(value: any) {
-        if (typeof value === 'number') {
-            const lightbulbService = this.accessory.getService(
-                this.platform.Service.Lightbulb,
-            )
-            if (lightbulbService) {
-                const char = lightbulbService.getCharacteristic(
-                    this.platform.Characteristic.On,
-                )
-                char.updateValue(value > 0)
-                if (value > 0) {
-                    const char2 = lightbulbService.getCharacteristic(
-                        this.platform.Characteristic.Brightness,
-                    )
-                    char2.updateValue(value)
-                    this.latestOnValue = value
-                }
+        if (typeof value === 'number' && value >= 0 && value <= 100) {
+            if (value === 0) {
+                this.currentOn = false
             } else {
-                this.platform.log.error(
-                    `No Lightbuld for Dimmer ${this.accessory.UUID}`,
-                )
+                this.currentOn = true
+                this.currentBrightness = value
             }
+            this.updateHomekit()
         } else {
             this.platform.log.error(
                 `Bad value ${value} for Dimmer ${this.accessory.UUID}`,
+            )
+        }
+    }
+
+    private async updateElights() {
+        await setDimmerOutput(
+            this.accessory.UUID,
+            this.currentOn ? this.currentBrightness : 0,
+        )
+    }
+
+    private updateHomekit() {
+        const lightbulbService = this.accessory.getService(
+            this.platform.Service.Lightbulb,
+        )
+        if (lightbulbService) {
+            const charOn = lightbulbService.getCharacteristic(
+                this.platform.Characteristic.On,
+            )
+            if (charOn.value !== this.currentOn) {
+                charOn.updateValue(this.currentOn)
+            }
+            const charBrightness = lightbulbService.getCharacteristic(
+                this.platform.Characteristic.Brightness,
+            )
+            if (charBrightness.value !== this.currentBrightness) {
+                charBrightness.updateValue(this.currentBrightness)
+            }
+        } else {
+            this.platform.log.error(
+                `No Lightbulb for Dimmer ${this.accessory.UUID}`,
             )
         }
     }
