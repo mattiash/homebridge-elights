@@ -67,16 +67,14 @@ export class ElightsDimmerAccessory {
      * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
      */
     async setOn(value: CharacteristicValue) {
-        this.platform.log.info(`${this.accessory.UUID} was set to: ${value}`)
+        this.platform.log.info(`setOn ${this.accessory.UUID} ${value}`)
         this.currentOn = !!value
         await this.updateElights()
     }
 
     async setBrightness(value: CharacteristicValue) {
+        this.platform.log.info(`setBrightness ${this.accessory.UUID} ${value}`)
         if (typeof value === 'number' && value > 0 && value <= 100) {
-            this.platform.log.info(
-                `${this.accessory.UUID} was set to: ${value}`,
-            )
             this.currentBrightness = value
             await this, this.updateElights()
         } else {
@@ -87,6 +85,9 @@ export class ElightsDimmerAccessory {
     }
 
     elightsValueUpdated(value: any) {
+        this.platform.log.info(
+            `elightsValueUpdated ${this.accessory.UUID} ${value}`,
+        )
         if (typeof value === 'number' && value >= 0 && value <= 100) {
             if (value === 0) {
                 this.currentOn = false
@@ -103,6 +104,9 @@ export class ElightsDimmerAccessory {
     }
 
     private async updateElights() {
+        this.platform.log.info(
+            `updateElights ${this.accessory.UUID} ${this.currentOn} ${this.currentBrightness}`,
+        )
         await setDimmerOutput(
             this.accessory.UUID,
             this.currentOn ? this.currentBrightness : 0,
@@ -110,6 +114,9 @@ export class ElightsDimmerAccessory {
     }
 
     private updateHomekit() {
+        this.platform.log.info(
+            `updateHomekit ${this.accessory.UUID} ${this.currentOn} ${this.currentBrightness}`,
+        )
         const lightbulbService = this.accessory.getService(
             this.platform.Service.Lightbulb,
         )
@@ -118,12 +125,18 @@ export class ElightsDimmerAccessory {
                 this.platform.Characteristic.On,
             )
             if (charOn.value !== this.currentOn) {
+                this.platform.log.info(
+                    `On.value ${this.accessory.UUID} ${charOn.value} ${this.currentOn}`,
+                )
                 charOn.updateValue(this.currentOn)
             }
             const charBrightness = lightbulbService.getCharacteristic(
                 this.platform.Characteristic.Brightness,
             )
             if (charBrightness.value !== this.currentBrightness) {
+                this.platform.log.info(
+                    `Brightness.value ${this.accessory.UUID} ${charBrightness.value} ${this.currentBrightness}`,
+                )
                 charBrightness.updateValue(this.currentBrightness)
             }
         } else {
