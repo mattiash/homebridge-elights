@@ -11,6 +11,10 @@ import { ElightsDynamicPlatform } from './platform'
 export class ElightsDimmerAccessory {
     private service: Service
 
+    // The value that the dimmer had when it was last on
+    // or the current value if the dimmer is on
+    private latestOnValue = 50
+
     constructor(
         private readonly platform: ElightsDynamicPlatform,
         private readonly accessory: PlatformAccessory,
@@ -63,15 +67,19 @@ export class ElightsDimmerAccessory {
      */
     async setOn(value: CharacteristicValue) {
         this.platform.log.info(`${this.accessory.UUID} was set to: ${value}`)
-        await setDimmerOutput(this.accessory.UUID, value ? 50 : 0)
+        await setDimmerOutput(
+            this.accessory.UUID,
+            value ? this.latestOnValue : 0,
+        )
     }
 
     async setBrightness(value: CharacteristicValue) {
-        if (typeof value === 'number' && value >= 0 && value <= 100) {
+        if (typeof value === 'number' && value > 0 && value <= 100) {
             this.platform.log.info(
                 `${this.accessory.UUID} was set to: ${value}`,
             )
             await setDimmerOutput(this.accessory.UUID, value)
+            this.latestOnValue = value
         } else {
             this.platform.log.error(
                 `${this.accessory.UUID} invalid value: ${value}`,
@@ -89,10 +97,13 @@ export class ElightsDimmerAccessory {
                     this.platform.Characteristic.On,
                 )
                 char.updateValue(value > 0)
-                const char2 = lightbulbService.getCharacteristic(
-                    this.platform.Characteristic.Brightness,
-                )
-                char2.updateValue(value)
+                if (value > 0) {
+                    const char2 = lightbulbService.getCharacteristic(
+                        this.platform.Characteristic.Brightness,
+                    )
+                    char2.updateValue(value)
+                    this.latestOnValue = value
+                }
             } else {
                 this.platform.log.error(
                     `No Lightbuld for Dimmer ${this.accessory.UUID}`,
