@@ -59,7 +59,11 @@ export class ElightsRelayAccessory {
      */
     async setOn(value: CharacteristicValue) {
         this.platform.log.info(`${this.accessory.UUID} was set to: ${value}`)
-        await setRelayOutput(this.accessory.UUID, value === true)
+        try {
+            await setRelayOutput(this.accessory.UUID, value === true)
+        } catch (err) {
+            this.platform.log.error('Failed to update relay in elights')
+        }
     }
 
     elightsValueUpdated(value: any) {

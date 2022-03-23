@@ -15,6 +15,7 @@ export class ElightsDimmerAccessory {
     // or the current value if the dimmer is on
     private currentBrightness = 50
     private currentOn = true
+    private currentElightsValue = 50
 
     constructor(
         private readonly platform: ElightsDynamicPlatform,
@@ -89,6 +90,7 @@ export class ElightsDimmerAccessory {
             `elightsValueUpdated ${this.accessory.UUID} ${value}`,
         )
         if (typeof value === 'number' && value >= 0 && value <= 100) {
+            this.currentElightsValue = value
             if (value === 0) {
                 this.currentOn = false
             } else {
@@ -107,10 +109,19 @@ export class ElightsDimmerAccessory {
         this.platform.log.info(
             `updateElights ${this.accessory.UUID} ${this.currentOn} ${this.currentBrightness}`,
         )
-        await setDimmerOutput(
-            this.accessory.UUID,
-            this.currentOn ? this.currentBrightness : 0,
-        )
+        const newElightsValue = this.currentOn ? this.currentBrightness : 0
+        if (newElightsValue !== this.currentElightsValue) {
+            this.currentElightsValue = newElightsValue
+            try {
+                await setDimmerOutput(this.accessory.UUID, newElightsValue)
+            } catch (err) {
+                this.platform.log.error(`Failed to set dimmer in elights`)
+            }
+        } else {
+            this.platform.log.info(
+                `updateElights ${this.accessory.UUID} skipped`,
+            )
+        }
     }
 
     private updateHomekit() {
